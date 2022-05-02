@@ -5,6 +5,7 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = '102931239123912nienfi1i'
+STATIC_PATH = 'static/user_files'
 
 
 @app.route('/')
@@ -33,7 +34,7 @@ def your_url():
         else:
             f = request.files['file']
             full_name = request.form['code'] + secure_filename(f.filename)
-            f.save(full_name)
+            f.save(f'{STATIC_PATH}/{full_name}')
             urls[request.form['code']] = {'file': full_name}
 
         with open('urls.json', 'w') as url_file:
@@ -41,3 +42,15 @@ def your_url():
         return render_template('your-url.html', code=request.form['code'])
     else:
         return redirect(url_for('home'))
+
+@app.route('/<string:code>')
+def redirect_to_url(code):
+    if os.path.exists('urls.json'):
+        with open('urls.json') as urls_file:
+            urls = json.load(urls_file)
+            if code in urls.keys():
+                if 'url' in urls[code].keys():
+                    return redirect(urls[code]['url'])
+                else:
+                    filename = urls[code]['file']
+                    return redirect(url_for('static', filename=f'user_files/{filename}'))
